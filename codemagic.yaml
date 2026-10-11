@@ -1,16 +1,25 @@
 workflows:
-  build_ios:
-    name: Build iOS IPA from SwiftPM
+  build_ios_app:
+    name: Build iOS App from SwiftPM iOSApplication
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
-      xcode: 16.0
+      xcode: 16.2
     scripts:
-      - name: Generate Xcode workspace from SwiftPM
+      - name: Generate Xcode workspace from Swift Package
         script: |
           xcodebuild -create-xcworkspace -package . -output app.xcworkspace
-      - name: Build IPA
+      - name: Build unsigned IPA
         script: |
-          xcodebuild build -workspace app.xcworkspace -scheme YourTargetName -sdk iphoneos -configuration Release
+          xcodebuild archive \
+            -workspace app.xcworkspace \
+            -scheme MyApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/MyApp.xcarchive
+          xcodebuild -exportArchive \
+            -archivePath build/MyApp.xcarchive \
+            -exportPath build/Output \
+            -exportOptionsPlist exportOptions.plist
     artifacts:
-      - build/Release-iphoneos/**/*.ipa
+      - build/Output/*.ipa
