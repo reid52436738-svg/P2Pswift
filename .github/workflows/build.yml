@@ -6,27 +6,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 由SwiftPM生成Xcode專案
-        run: swift package generate-xcodeproj
-
-      - name: Xcodebuild編譯實機arm64，禁止簽名
+      - name: Build arm64 iOS binary
         run: |
-          xcodebuild archive \
-          -project *.xcodeproj \
-          -scheme "我的App" \
-          -destination 'generic/platform=iOS' \
-          -archivePath ./build/app.xcarchive \
-          CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGN_IDENTITY=""
+          swift build --triple arm64-apple-ios -Xswiftc "-target" -Xswiftc "arm64-apple-ios17.0"
 
-      - name: 從xcarchive取出.app，打包Payload，製作IPA
+      - name: Assemble .app and IPA
         run: |
-          mkdir -p Payload
-          cp -r ./build/app.xcarchive/Products/Applications/*.app Payload/
+          mkdir -p Payload/MyApp.app
+          cp .build/arm64-apple-ios/debug/AppModule Payload/MyApp.app/MyApp
+          cat > Payload/MyApp.app/Info.plist <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+<key>CFBundleExecutable</key>
+<string>MyApp</string>
+<key>CFBundleIdentifier</key>
+<string>com.test.myapp</string>
+<key>CFBundleName</key>
+<string>MyApp</string>
+<key>CFBundleVersion</key>
+<string>1</string>
+<key>CFBundleShortVersionString</key>
+<string>1.0</string>
+</dict>
+</plist>
+EOF
           zip -r MyApp.ipa Payload
 
-      - name: 上傳IPA成品
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: 未簽名IPA(用Sideloadly簽名安裝)
+          name: 未簽名IPA
           path: MyApp.ipa
