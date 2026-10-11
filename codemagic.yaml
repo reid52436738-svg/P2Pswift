@@ -13,12 +13,12 @@ workflows:
         script: |
           xcodebuild archive \
             -workspace app.xcworkspace \
-            -scheme MyApp \
+            -scheme AppModule \
             -sdk iphoneos \
             -configuration Release \
-            -archivePath build/MyApp.xcarchive
+            -archivePath build/AppModule.xcarchive
           xcodebuild -exportArchive \
-            -archivePath build/MyApp.xcarchive \
+            -archivePath build/AppModule.xcarchive \
             -exportPath build/Output \
             -exportOptionsPlist exportOptions.plist
     artifacts:
