@@ -1,4 +1,4 @@
-name: Build real iOS app from SwiftPM
+name: Build unsigned iOS IPA for Sideloadly
 on: push
 jobs:
   build:
@@ -6,21 +6,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate temporary Xcode project from SwiftPM
-        run: |
-          swift package generate-xcodeproj
+      - name: 由SwiftPM生成Xcode專案
+        run: swift package generate-xcodeproj
 
-      - name: Build iOS simulator app with xcodebuild
+      - name: Xcodebuild編譯實機arm64，禁止簽名
         run: |
-          xcodebuild -project *.xcodeproj -scheme "我的App" -sdk iphonesimulator -configuration Release build
+          xcodebuild archive \
+          -project *.xcodeproj \
+          -scheme "我的App" \
+          -destination 'generic/platform=iOS' \
+          -archivePath ./build/app.xcarchive \
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGN_IDENTITY=""
 
-      - name: Locate compiled .app and zip
+      - name: 從xcarchive取出.app，打包Payload，製作IPA
         run: |
-          APP_PATH=$(find build/Release-iphonesimulator -name "我的App.app" -type d)
-          zip -r compiled_app.zip "$APP_PATH"
+          mkdir -p Payload
+          cp -r ./build/app.xcarchive/Products/Applications/*.app Payload/
+          zip -r MyApp.ipa Payload
 
-      - name: Upload compiled app
+      - name: 上傳IPA成品
         uses: actions/upload-artifact@v4
         with:
-          name: 編譯成品
-          path: compiled_app.zip
+          name: 未簽名IPA(用Sideloadly簽名安裝)
+          path: MyApp.ipa
