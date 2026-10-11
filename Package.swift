@@ -12,14 +12,21 @@ let package = Package(
         .iOS("17.0")
     ],
     products: [
-        .executable(name: "AppModule", targets: ["AppModule"])
+        .iOSApplication(name: "AppModule", targets: ["AppModule"])
     ],
     targets: [
-        .executableTarget(
+        .target(
             name: "AppModule",
             path: ".",
+            type: .iOSApplication,
             swiftSettings: [
                 .enableUpcomingFeature("BareSlashRegexLiterals")
+            ],
+            settings: [
+                .iOSApplicationInfo([
+                    .bundleIdentifier("com.test.myapp"),
+                    .bundleDisplayName("MyApp")
+                ])
             ]
         )
     ]
