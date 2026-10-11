@@ -1,0 +1,39 @@
+name: Build fake .app
+on: push
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile iOS binary
+        run: |
+          xcodebuild -scheme "我的App" -destination generic/platform=iOS build
+          cp build/Release-iphoneos/我的App ios_app_bin
+
+      - name: Make .app folder
+        run: |
+          mkdir -p 我的App.app/Contents/MacOS
+          cp ios_app_bin 我的App.app/Contents/MacOS/
+          cat > 我的App.app/Contents/Info.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+<key>CFBundleExecutable</key>
+<string>我的App</string>
+<key>CFBundleIdentifier</key>
+<string>com.test.myapp</string>
+</dict>
+</plist>
+EOF
+
+      - name: Zip file
+        run: zip -r 我的App.zip 我的App.app
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: 成品下載
+          path: 我的App.zip
