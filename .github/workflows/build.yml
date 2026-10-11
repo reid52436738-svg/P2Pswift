@@ -1,30 +1,26 @@
-name: Just make fake .app
+name: Build real iOS app from SwiftPM
 on: push
 jobs:
   build:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build empty app bundle
+
+      - name: Generate temporary Xcode project from SwiftPM
         run: |
-          mkdir -p 我的App.app/Contents/MacOS
-          echo "fake binary" > 我的App.app/Contents/MacOS/我的App
-          cat > 我的App.app/Contents/Info.plist <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-<key>CFBundleExecutable</key>
-<string>我的App</string>
-<key>CFBundleIdentifier</key>
-<string>com.test.myapp</string>
-</dict>
-</plist>
-EOF
-      - name: Zip
-        run: zip -r 我的App.zip 我的App.app
-      - name: Upload
+          swift package generate-xcodeproj
+
+      - name: Build iOS simulator app with xcodebuild
+        run: |
+          xcodebuild -project *.xcodeproj -scheme "我的App" -sdk iphonesimulator -configuration Release build
+
+      - name: Locate compiled .app and zip
+        run: |
+          APP_PATH=$(find build/Release-iphonesimulator -name "我的App.app" -type d)
+          zip -r compiled_app.zip "$APP_PATH"
+
+      - name: Upload compiled app
         uses: actions/upload-artifact@v4
         with:
-          name: 成品下載
-          path: 我的App.zip
+          name: 編譯成品
+          path: compiled_app.zip
